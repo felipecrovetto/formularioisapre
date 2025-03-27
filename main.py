@@ -6,7 +6,13 @@ from collections import Counter
 
 print("--- Iniciando la aplicación Flask en Heroku ---")
 
-app = Flask(__name__)
+try:
+    app = Flask(__name__)
+    print("--- Iniciando la aplicación Flask en Heroku - Flask App Creada ---")
+except Exception as e:
+    print(f"--- Iniciando la aplicación Flask en Heroku - Error al crear la aplicación Flask: {e} ---")
+    raise  # Esto hará que la aplicación falle y Heroku lo registre
+
 app.secret_key = os.environ.get('SECRET_KEY', 'tu_clave_secreta')  # Usar variable de entorno para la clave secreta
 
 # Datos del administrador - ¡IMPORTANTE! Usar variables de entorno para información sensible
@@ -14,22 +20,31 @@ ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'nuzja')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'golum')
 EXCEL_FILENAME = os.environ.get('EXCEL_FILENAME', 'solicitudes.xlsx')
 
-# Asegurarse de que el archivo Excel exista y tenga las nuevas columnas
-if not os.path.exists(EXCEL_FILENAME):
-    df = pd.DataFrame(columns=['Nombre', 'Apellido', 'RUT', 'Email', 'Teléfono Movil', 'Ingreso Bruto (CLP)', 'Clínicas de Preferencia', '¿Tienes Seguro Complementario?', 'Fecha de Ingreso', 'Estado'])
-    df.to_excel(EXCEL_FILENAME, index=False)
-else:
-    try:
+print("--- Iniciando la aplicación Flask en Heroku - Verificando archivo Excel ---")
+try:
+    if not os.path.exists(EXCEL_FILENAME):
+        print(f"--- Iniciando la aplicación Flask en Heroku - Archivo Excel no encontrado, creando: {EXCEL_FILENAME} ---")
+        df = pd.DataFrame(columns=['Nombre', 'Apellido', 'RUT', 'Email', 'Teléfono Movil', 'Ingreso Bruto (CLP)', 'Clínicas de Preferencia', '¿Tienes Seguro Complementario?', 'Fecha de Ingreso', 'Estado'])
+        df.to_excel(EXCEL_FILENAME, index=False)
+        print("--- Iniciando la aplicación Flask en Heroku - Archivo Excel creado ---")
+    else:
+        print(f"--- Iniciando la aplicación Flask en Heroku - Archivo Excel encontrado, leyendo: {EXCEL_FILENAME} ---")
         df = pd.read_excel(EXCEL_FILENAME)
+        print("--- Iniciando la aplicación Flask en Heroku - Archivo Excel leído ---")
         # Añadir nuevas columnas si no existen
         if 'Fecha de Ingreso' not in df.columns:
+            print("--- Iniciando la aplicación Flask en Heroku - Columna 'Fecha de Ingreso' no encontrada, agregando ---")
             df['Fecha de Ingreso'] = None
             df.to_excel(EXCEL_FILENAME, index=False)
+            print("--- Iniciando la aplicación Flask en Heroku - Columna 'Fecha de Ingreso' agregada ---")
         if 'Estado' not in df.columns:
+            print("--- Iniciando la aplicación Flask en Heroku - Columna 'Estado' no encontrada, agregando ---")
             df['Estado'] = 'Pendiente'  # Estado inicial
             df.to_excel(EXCEL_FILENAME, index=False)
-    except Exception as e:
-        print(f"Error al leer o actualizar el archivo Excel: {e}")
+            print("--- Iniciando la aplicación Flask en Heroku - Columna 'Estado' agregada ---")
+except Exception as e:
+    print(f"--- Iniciando la aplicación Flask en Heroku - Error al leer o actualizar el archivo Excel: {e} ---")
+    raise # Esto hará que la aplicación falle y Heroku lo registre
 
 def calcular_7_porciento(ingreso_bruto):
     try:
