@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Panel de Administración</title>
+    <style>
+        body { font-family: sans-serif; }
+        .container { width: 95%; margin: 20px auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .actions { display: flex; gap: 10px; }
+        .edit-button, .delete-button { padding: 8px 12px; cursor: pointer; border: none; border-radius: 4px; text-decoration: none; color: white; }
+        .edit-button { background-color: #5cb85c; }
+        .delete-button { background-color: #d9534f; }
+        .download-button { display: block; margin-top: 20px; padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; text-decoration: none; }
+        .back-button { display: block; margin-top: 10px; padding: 8px 12px; background-color: #6c757d; color: white; border: none; cursor: pointer; text-decoration: none; border-radius: 4px; }
+        .estado-button {
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100px;
+            text-align: center;
+            color: black; /* Cambiar color de texto a negro para mejor contraste */
+        }
+        .estado-pendiente { background-color: #FFD1DC; border: 1px solid #ccc; } /* Rosado Pastel */
+        .estado-rechazado { background-color: #FF6961; color: white; } /* Rojo Pastel */
+        .estado-cerrado { background-color: #98FB98; } /* Verde Pastel */
+        .chart-container {
+            width: 48%; /* Ajustar el ancho para que quepan dos uno al lado del otro */
+            margin-top: 20px;
+            display: inline-block;
+            vertical-align: top; /* Alinear la parte superior de los contenedores */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Panel de Administración</h2>
+        <a href="{{ url_for('descargar_excel') }}" class="download-button">Descargar Excel</a>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>RUT</th>
+                    <th>Email</th>
+                    <th>Teléfono Movil</th>
+                    <th>Ingreso Bruto (CLP)</th>
+                    <th>Clínicas de Preferencia</th>
+                    <th>¿Tienes Seguro Complementario?</th>
+                    <th>Fecha de Ingreso</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ row['Nombre'] }}</td>
+                    <td>{{ row['Apellido'] }}</td>
+                    <td>{{ row['RUT'] }}</td>
+                    <td>{{ row['Email'] }}</td>
+                    <td>{{ row['Teléfono Movil'] }}</td>
+                    <td>{{ row['Ingreso Bruto (CLP)'] }}</td>
+                    <td>{{ row['Clínicas de Preferencia'] }}</td>
+                    <td>{{ row['¿Tienes Seguro Complementario?'] }}</td>
+                    <td>{{ row['Fecha de Ingreso'] }}</td>
+                    <td>
+                        <button class="estado-button {% if row['Estado'] == 'Pendiente' %}estado-pendiente{% elif row['Estado'] == 'Rechazado' %}estado-rechazado{% elif row['Estado'] == 'Cerrado' %}estado-cerrado{% endif %}"
+                                onclick="cambiarEstado({{ loop.index0 }})">{{ row['Estado'] }}</button>
+                    </td>
+                    <td class="actions">
+                        <a href="{{ url_for('editar_fila', index=loop.index0) }}" class="edit-button">Editar</a>
+                        <a href="{{ url_for('eliminar_fila', index=loop.index0) }}" class="delete-button">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="display: none;">
+            <span id="statusCountsData">{{ status_counts|tojson }}</span>
+        </div>
+
+        <h3>Estadísticas</h3>
+        <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="incomeChart"></canvas>
+        </div>
+        <a href="{{ url_for('volver_formulario') }}" class="back-button">Volver al Formulario</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const estados = ['Pendiente', 'Rechazado', 'Cerrado'];
+        const estadoColores = {
+            'Pendiente': '#FFD1DC', // Rosado Pastel
+            'Rechazado': '#FF6961', // Rojo Pastel
+            'Cerrado': '#98FB98'   // Verde Pastel
+        };
+
+        async function cambiarEstado(index) {
+            const estadoButton = document.querySelector(`tbody tr:nth-child(${index + 1}) .estado-button`);
+            let estadoActual = estadoButton.textContent;
+            let indiceEstadoActual = estados.indexOf(estadoActual);
+            let nuevoIndiceEstado = (indiceEstadoActual + 1) % estados.length;
+            let nuevoEstado = estados[nuevoIndiceEstado];
+
+            const response = await fetch(`/admin/actualizar_estado/${index}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    estado: nuevoEstado
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                estadoButton.textContent = data.estado;
+                estadoButton.className = 'estado-button'; // Resetear clases
+                if (data.estado === 'Pendiente') {
+                    estadoButton.classList.add('estado-pendiente');
+                } else if (data.estado === 'Rechazado') {
+                    estadoButton.classList.add('estado-rechazado');
+                } else if (data.estado === 'Cerrado') {
+                    estadoButton.classList.add('estado-cerrado');
+                }
+                // Actualizar la gráfica después de cambiar el estado
+                actualizarGraficaEstado();
+            } else {
+                alert('Error al actualizar el estado.');
+            }
+        }
+
+        // Función para actualizar la gráfica de estado
+        function actualizarGraficaEstado() {
+            fetch('/admin/panel') // Recargar los datos del panel (sin recargar toda la página)
+                .then(response => response.text())
+                .then(html => {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const newData = JSON.parse(tempDiv.querySelector('#statusCountsData').textContent);
+                    statusChart.data.labels = Object.keys(newData);
+                    statusChart.data.datasets[0].data = Object.values(newData);
+                    statusChart.data.datasets[0].backgroundColor = Object.keys(newData).map(estado => estadoColores[estado]);
+                    statusChart.update();
+                });
+        }
+
+        // Gráfica de torta por estado
+        const statusCountsData = {{ status_counts|tojson }};
+        const statusLabels = Object.keys(statusCountsData);
+        const statusValues = Object.values(statusCountsData);
+        const statusColors = statusLabels.map(estado => estadoColores[estado]);
+
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    label: 'Estado de Solicitudes',
+                    data: statusValues,
+                    backgroundColor: statusColors,
+                    borderColor: statusColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Estado de Solicitudes'
+                    }
+                }
+            }
+        });
+
+        // Gráfica de línea temporal por mes
+        const monthlyIncomeData = {{ monthly_income_data|tojson }};
+        const monthYearLabels = Object.keys(monthlyIncomeData).sort(); // Ordenar por fecha
+        const incomeValues = monthYearLabels.map(monthYear => monthlyIncomeData[monthYear]);
+
+        const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+        const incomeChart = new Chart(incomeCtx, {
+            type: 'line',
+            data: {
+                labels: monthYearLabels,
+                datasets: [{
+                    label: 'Ingresos por Mes',
+                    data: incomeValues,
+                    borderColor: 'blue',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Mes'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Cantidad de Ingresos'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Ingresos de Solicitudes por Mes'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

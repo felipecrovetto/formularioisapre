@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Editar Solicitud</title>
+    <style>
+        body { font-family: sans-serif; }
+        .container { width: 500px; margin: 50px auto; border: 1px solid #ccc; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="email"], input[type="tel"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        input[type="checkbox"] { margin-right: 5px; }
+        button[type="submit"], .cancel-button { padding: 10px 15px; border: none; cursor: pointer; text-decoration: none; }
+        button[type="submit"] { background-color: #5cb85c; color: white; }
+        .cancel-button { background-color: #d9534f; color: white; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Editar Solicitud</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" value="{{ fila['Nombre'] }}" required>
+            </div>
+            <div class="form-group">
+                <label for="apellido">Apellido</label>
+                <input type="text" id="apellido" name="apellido" value="{{ fila['Apellido'] }}" required>
+            </div>
+            <div class="form-group">
+                <label for="rut">RUT</label>
+                <input type="text" id="rut" name="rut" value="{{ fila['RUT'] }}">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ fila['Email'] }}" required>
+            </div>
+            <div class="form-group">
+                <label for="telefono">Teléfono Movil</label>
+                <input type="tel" id="telefono" name="telefono" value="{{ fila['Teléfono Movil'] }}">
+            </div>
+            <div class="form-group">
+                <label for="ingreso_bruto">Ingreso Bruto (CLP)</label>
+                <input type="text" id="ingreso_bruto" name="ingreso_bruto" value="{{ fila['Ingreso Bruto (CLP)'] }}" required>
+            </div>
+            <div class="form-group">
+                <label>Clínicas de Preferencia (Seleccione una o más)</label><br>
+                {% for clinica in clinicas %}
+                <input type="checkbox" name="clinicas" value="{{ clinica }}" {% if clinica in fila['Clínicas de Preferencia'] %}checked{% endif %}> {{ clinica }}<br>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                <label>¿Tienes Seguro Complementario?</label><br>
+                <input type="radio" id="si" name="seguro_complementario" value="Si" {% if fila['¿Tienes Seguro Complementario?'] == 'Si' %}checked{% endif %}> <label for="si">Si</label>
+                <input type="radio" id="no" name="seguro_complementario" value="No" {% if fila['¿Tienes Seguro Complementario?'] == 'No' %}checked{% endif %}> <label for="no">No</label>
+            </div>
+            <button type="submit">Guardar Cambios</button>
+            <a href="{{ url_for('admin_panel') }}" class="cancel-button">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>

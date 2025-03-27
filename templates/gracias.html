@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gracias por tu Solicitud</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f5f5dc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); text-align: center; }
+        h2 { color: #007bff; }
+        p { margin-bottom: 15px; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>¡Gracias por tu Solicitud!</h2>
+        <p>Hemos recibido tu información y la estamos procesando.</p>
+        {% if porcentaje_7 != "Error: Ingreso no válido" %}
+            <p>El 7% de tu ingreso bruto (${{ ingreso_bruto }}) es aproximadamente: <strong>${{ porcentaje_7|int }}</strong>.</p>
+        {% else %}
+            <p>Hubo un error al calcular el 7% de tu ingreso.</p>
+        {% endif %}
+        <p>Te contactaremos a la brevedad.</p>
+        <p><a href="{{ url_for('formulario') }}">Volver al Formulario</a></p>
+    </div>
+</body>
+</html>

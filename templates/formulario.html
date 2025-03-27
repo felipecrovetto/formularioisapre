@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solicitud de Plan de Salud</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f5f5dc; /* Beige */
+            margin: 0;
+            padding: 20px; /* Añadir un poco de padding al body */
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Centrar verticalmente el formulario y los contenedores de PDF */
+            min-height: 100vh;
+            gap: 30px; /* Espacio entre el formulario y los enlaces PDF */
+        }
+
+        .pdf-links-left, .pdf-links-right {
+            width: 200px; /* Ancho para los contenedores de los enlaces PDF */
+            padding: 15px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center; /* Centrar horizontalmente los botones */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centrar verticalmente los botones */
+            align-items: center; /* Centrar los elementos horizontalmente dentro del contenedor */
+        }
+
+        .container {
+            width: 500px;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            /* order: 2; No necesitamos order si usamos align-items: center en body */
+        }
+
+        .pdf-link {
+            display: block;
+            margin-bottom: 10px;
+            padding: 16px 20px; /* Aumentar el padding superior e inferior para la altura */
+            background-color: #FFD1DC; /* Rosado Pastel */
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-decoration: none;
+            color: black; /* Color de texto negro */
+            transition: background-color 0.3s ease;
+            text-align: center; /* Centrar el texto en el botón */
+            font-size: 1em; /* Opcional: ajustar el tamaño de la fuente */
+            width: 180px; /* Opcional: ajustar un ancho fijo para hacerlo más cuadrado */
+        }
+
+        .pdf-link:hover {
+            background-color: #FF69B4; /* Rosado más fuerte al pasar el mouse */
+            color: white;
+        }
+
+        .pdf-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center; /* Centrar el título */
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="number"] {
+            width: calc(100% - 16px);
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .clinica-button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .clinica-button, .seguro-button {
+            background-color: #FFD1DC; /* Rosado Pastel */
+            color: black;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .clinica-button.selected, .seguro-button.selected {
+            background-color: #FF69B4; /* Rosado más fuerte para la selección */
+            color: white;
+            border-color: #FF69B4;
+        }
+        #telefono::placeholder {
+            color: rgba(0, 0, 0, 0.3); /* Transparent placeholder */
+        }
+        button[type="submit"] {
+            background-color: #FFD1DC; /* Rosado Pastel */
+            color: black;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        button[type="submit"]:hover {
+            background-color: #FF69B4; /* Rosado más fuerte al pasar el mouse */
+        }
+        .admin-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button class="admin-button" onclick="window.location.href='/admin'">Admin</button>
+
+    <div class="pdf-links-left">
+        <div class="pdf-title">Plan Principal</div>
+        <a href="{{ url_for('static', filename='pdfs/ALEMANA.pdf') }}" class="pdf-link" download="ALEMANA.pdf">ALEMANA.pdf</a>
+        <div class="pdf-title">Plan Principal</div>
+        <a href="{{ url_for('static', filename='pdfs/SANTA MARIA.pdf') }}" class="pdf-link" download="SANTA MARIA.pdf">SANTA MARIA.pdf</a>
+    </div>
+
+    <div class="container">
+        <h2>Solicitud de Plan de Salud</h2>
+        <form method="POST" onsubmit="return validarFormulario()">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" onkeypress="return soloLetras(event)" required>
+                <div id="nombreError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label for="apellido">Apellido</label>
+                <input type="text" id="apellido" name="apellido" onkeypress="return soloLetras(event)" required>
+                <div id="apellidoError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label for="rut">RUT</label>
+                <input type="text" id="rut" name="rut" oninput="formatearRut(this)" onkeypress="return soloNumeros(event)" maxlength="12" required>
+                <div id="rutError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+                <div id="emailError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label for="telefono">Teléfono Movil</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="+56912345678" pattern="^\+56\d{9}$" required>
+                <div id="telefonoError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label for="ingreso_bruto">Ingreso Bruto (CLP)</label>
+                <input type="number" id="ingreso_bruto" name="ingreso_bruto" step="1" required>
+                <div id="ingresoBrutoError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label>Clínicas de Preferencia (Seleccione una o más)</label>
+                <div class="clinica-button-group">
+                    <button type="button" class="clinica-button" data-value="Clínica Alemana">Clínica Alemana</button>
+                    <button type="button" class="clinica-button" data-value="U Andes">U Andes</button>
+                    <button type="button" class="clinica-button" data-value="UC Christus">UC Christus</button>
+                    <button type="button" class="clinica-button" data-value="Indisa">Indisa</button>
+                    <button type="button" class="clinica-button" data-value="Clínica Santa María">Clínica Santa María</button>
+                    <button type="button" class="clinica-button" data-value="Red Salud">Red Salud</button>
+                    <button type="button" class="clinica-button" data-value="Meds">Meds</button>
+                    <input type="hidden" id="clinicas" name="clinicas" value="" required>
+                    <div id="clinicasError" class="error-message"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>¿Tienes Seguro Complementario?</label><br>
+                <div>
+                    <button type="button" class="seguro-button" data-value="Si">Si</button>
+                    <button type="button" class="seguro-button" data-value="No">No</button>
+                    <input type="hidden" id="seguro_complementario" name="seguro_complementario" value="" required>
+                    <div id="seguroComplementarioError" class="error-message"></div>
+                </div>
+            </div>
+            <button type="submit">Enviar Solicitud</button>
+        </form>
+    </div>
+
+    <div class="pdf-links-right">
+        <div class="pdf-title">Plan Principal</div>
+        <a href="{{ url_for('static', filename='pdfs/UC CHRISTUS.pdf') }}" class="pdf-link" download="UC CHRISTUS.pdf">UC CHRISTUS.pdf</a>
+        <div class="pdf-title">Plan Principal</div>
+        <a href="{{ url_for('static', filename='pdfs/SANTA MARIA.pdf') }}" class="pdf-link" download="SANTA MARIA.pdf">SANTA MARIA.pdf</a>
+    </div>
+
+    <script>
+        function soloLetras(event) {
+            var charCode = event.which ? event.which : event.keyCode;
+            if ((charCode >= 65 && charCode <= 90) || (charCode >= 97 && charCode <= 122) || charCode === 32) {
+                return true;
+            }
+            document.getElementById(event.target.id + 'Error').innerText = "Solo se permiten letras.";
+            return false;
+        }
+
+        function soloNumeros(event) {
+            var charCode = event.which ? event.which : event.keyCode;
+            if (charCode >= 48 && charCode <= 57) {
+                return true;
+            }
+            return false;
+        }
+
+        function formatearRut(input) {
+            let rut = input.value.replace(/\D/g, ''); // Eliminar caracteres no numéricos
+            if (rut.length > 1) {
+                let dv = rut.slice(-1);
+                let cuerpo = rut.slice(0, -1);
+                rut = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+            }
+            input.value = rut;
+        }
+
+        const clinicaButtons = document.querySelectorAll('.clinica-button');
+        const clinicasInput = document.getElementById('clinicas');
+        let selectedClinicas = [];
+
+        clinicaButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                this.classList.toggle('selected');
+                const value = this.getAttribute('data-value');
+                if (this.classList.contains('selected')) {
+                    if (!selectedClinicas.includes(value)) {
+                        selectedClinicas.push(value);
+                    }
+                } else {
+                    selectedClinicas = selectedClinicas.filter(item => item !== value);
+                }
+                clinicasInput.value = selectedClinicas.join(', ');
+            });
+        });
+
+        const seguroButtons = document.querySelectorAll('.seguro-button');
+        const seguroInput = document.getElementById('seguro_complementario');
+        seguroButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                seguroButtons.forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+                seguroInput.value = this.getAttribute('data-value');
+            });
+        });
+
+        function validarFormulario() {
+            let valido = true;
+
+            // Validar Nombre
+            const nombreInput = document.getElementById('nombre');
+            if (nombreInput.value.trim() === '') {
+                document.getElementById('nombreError').innerText = "Este campo es obligatorio.";
+                valido = false;
+            } else {
+                document.getElementById('nombreError').innerText = "";
+            }
+
+            // Validar Apellido
+            const apellidoInput = document.getElementById('apellido');
+            if (apellidoInput.value.trim() === '') {
+                document.getElementById('apellidoError').innerText = "Este campo es obligatorio.";
+                valido = false;
+            } else {
+                document.getElementById('apellidoError').innerText = "";
+            }
+
+            // Validar RUT
+            const rutInput = document.getElementById('rut');
+            if (rutInput.value.trim() === '') {
+                document.getElementById('rutError').innerText = "Este campo es obligatorio.";
+                valido = false;
+            } else if (rutInput.value.length < 9) { // Mínima longitud de un RUT válido (sin puntos ni guion)
+                document.getElementById('rutError').innerText = "Ingrese un RUT válido.";
+                valido = false;
+            } else {
+                document.getElementById('rutError').innerText = "";
+            }
+
+            // Validar Email
+            const emailInput = document.getElementById('email');
+            if (emailInput.value.trim() === '') {
+                document.getElementById('emailError').innerText = "Este campo es obligatorio.";
+                valido = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
+                document.getElementById('emailError').innerText = "Ingrese un email válido.";
+                valido = false;
+            } else {
+                document.getElementById('emailError').innerText = "";
+            }
+
+            // Validar Teléfono
+            const telefonoInput = document.getElementById('telefono');
+            if (telefonoInput.value.trim() === '') {
+                document.getElementById('telefonoError').innerText = "Este campo es obligatorio.";
+                valido = false;
+            } else if (!/^\+56\d{9}$/.test(telefonoInput.value)) {
+                document.getElementById('telefonoError').innerText = "Ingrese un teléfono válido con el formato +56 seguido de 9 dígitos.";
+                valido = false;
+            } else {
+                document.getElementById('telefonoError').innerText = "";
+            }
+
+            // Validar Ingreso Bruto
+            const ingresoBrutoInput = document.getElementById('ingreso_bruto');
+            if (ingresoBrutoInput.value.trim() === '') {
+                document.getElementById('ingresoBrutoError').innerText = "Este campo es obligatorio.";
+                valido = false;
+            } else if (isNaN(parseFloat(ingresoBrutoInput.value)) || !isFinite(ingresoBrutoInput.value) || parseFloat(ingresoBrutoInput.value) <= 0) {
+                document.getElementById('ingresoBrutoError').innerText = "Ingrese un monto numérico válido.";
+                valido = false;
+            } else {
+                document.getElementById('ingresoBrutoError').innerText = "";
+            }
+
+            // Validar Clínicas
+            if (selectedClinicas.length === 0) {
+                document.getElementById('clinicasError').innerText = "Seleccione al menos una clínica.";
+                valido = false;
+            } else {
+                document.getElementById('clinicasError').innerText = "";
+            }
+
+            // Validar Seguro Complementario
+            if (seguroInput.value === '') {
+                document.getElementById('seguroComplementarioError').innerText = "Seleccione una opción.";
+                valido = false;
+            } else {
+                document.getElementById('seguroComplementarioError').innerText = "";
+            }
+
+            return valido;
+        }
+    </script>
+</body>
+</html>
