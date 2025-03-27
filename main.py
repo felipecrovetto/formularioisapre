@@ -4,6 +4,8 @@ import os
 from datetime import datetime
 from collections import Counter
 
+print("--- Iniciando la aplicación Flask en Heroku ---")
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'tu_clave_secreta')  # Usar variable de entorno para la clave secreta
 
@@ -172,6 +174,6 @@ def actualizar_estado(index):
     else:
         return {'success': False, 'error': 'Estado inválido'}, 400
 
-# ¡LA SIGUIENTE LÍNEA DEBE SER ELIMINADA O COMENTADA PARA DESPLEGAR EN HEROKU!
+# ¡LA SIGUIENTE LÍNEA DEBE ESTAR COMENTADA PARA DESPLEGAR EN HEROKU!
 # if __name__ == '__main__':
 #     app.run(debug=True)
